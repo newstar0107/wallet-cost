@@ -21,6 +21,8 @@ var uiController = (function () {
         getDOMString: function () {
             return DomString;
         },
+        // Page рүү орлого зарлагын мэдээг гаргана
+        addPrint: function (item, type) {},
     };
     //public service ийн code end
 })();
@@ -50,14 +52,21 @@ var financeController = (function () {
             exp: 123,
         },
     };
-    data.wallet.inc.push(i1);
-    data.wallet.inc.push(i2);
-    console.log(data.wallet.inc);
+    // data.wallet.inc.push(i1);
+    // data.wallet.inc.push(i2);
+    // console.log(data.wallet.inc);
     //private data and function code end
     //public service ийн code begin
     return {
-        getInput: function () {
-            return {};
+        addData: function (type, value, description) {
+            var item, id;
+            if (data.wallet[type].length === 0) id = 1;
+            else id = data.wallet[type][data.wallet[type].length - 1].id + 1;
+            if (type === "inc") item = new Income(id, value, description);
+            else item = new Expense(id, value, description);
+            data.wallet[type].push(item);
+            console.log(data.wallet[type]);
+            return item;
         },
     };
     //public service ийн code end
@@ -66,15 +75,14 @@ var financeController = (function () {
 //main хэсэг
 var appController = (function (uiController, financeController) {
     var addlistItem = function () {
-        console.log("clicked or enter pressed");
-        // uiController.readDisplay();
-
         console.log(uiController.getInput());
         //1.Оруулах өгөгдөлийг унших
-
+        var input = uiController.getInput();
         //2.Уншсан өгөгдөлөө дамжуулна Finance controller луу
         //3.Finance controller дээр тооцоолол хийнэ
+        var item = financeController.addData(input.type, input.value, input.description);
         //4.Тооцоолол хийсэн өгөгдлийг Дэлгэцрүү хэвлэнэ uiController дотроос
+        uiController.addPrint(item, input.type);
     };
     var setEventListner = function () {
         var DomString = uiController.getDOMString();
