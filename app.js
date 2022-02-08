@@ -12,6 +12,8 @@ var uiController = (function () {
         totalExpense: ".budget__expenses--value",
         huvi: ".budget__expenses--percentage",
         balance: ".budget__value",
+        itemList: ".container clearfix",
+        bottomDiv: ".bottom",
     };
     //private data and function code end
 
@@ -42,6 +44,19 @@ var uiController = (function () {
             document.querySelector(DomString.balance).textContent = "+" + data.balance;
             document.querySelector(DomString.huvi).textContent = data.huvi + "%";
             // console.log(document.querySelector(DomString.totalExpense).textContent);
+        },
+        // Page рүү орлого зарлагын мэдээний нийт дүнг гаргана
+        whichDeleteItem: function () {
+            // document.querySelector(DomString.incomeList).addEventListener("click", function (event) {
+            //     var id = event.target.id;
+            //     var idAndType = id.splite("-");
+            //     if (idAndType[0] === "income") idAndType[0] = "inc";
+            //     if (idAndType[0] === "expense") idAndType[0] = "exp";
+            //     return {
+            //         type: idAndType[0],
+            //         id: idAndType[1],
+            //     };
+            // });
         },
         // Page рүү орлого зарлагын мэдээг гаргана
         addPrint: function (item, type) {
@@ -81,7 +96,6 @@ var financeController = (function () {
         var sum = 0;
         data.wallet[type].forEach(function (el) {
             sum = sum + el.value;
-            console.log(el.value);
         });
         data.totals[type] = sum;
     };
@@ -101,6 +115,13 @@ var financeController = (function () {
     //private data and function code end
     //public service ийн code begin
     return {
+        deleteItem: function (id, type) {
+            var idArr = data.wallet[type].map(function (el) {
+                return el.id;
+            });
+            var index = idArr.indexOf(id);
+            if (index !== -1) data.wallet[type].splice(index, 1);
+        },
         calc: function () {
             calcSum("inc");
             calcSum("exp");
@@ -155,6 +176,7 @@ var appController = (function (uiController, financeController) {
     };
     var setEventListner = function () {
         var DomString = uiController.getDOMString();
+
         window.document.querySelector(DomString.addBtn).addEventListener("click", function () {
             addlistItem();
         });
@@ -162,6 +184,11 @@ var appController = (function (uiController, financeController) {
             if (event.code === "Enter" || event.which === 13) {
                 addlistItem();
             }
+        });
+
+        document.querySelector(DomString.bottomDiv).addEventListener("click", function (event) {
+            var id = event.target.id;
+            console.log(id);
         });
     };
     //public service code begin
