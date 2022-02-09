@@ -12,13 +12,37 @@ var uiController = (function () {
         totalExpense: ".budget__expenses--value",
         huvi: ".budget__expenses--percentage",
         balance: ".budget__value",
-        itemList: ".container clearfix",
+        itemLabel: ".container",
         bottomDiv: ".bottom",
+        expenseLabel: ".item__percentage",
+        dateLabel: ".budget__title--month",
+        selectBox: ".add__type",
     };
     //private data and function code end
+    var nodeListOfForeach = function (list, callback) {
+        for (var i = 0; i < list.length; i++) {
+            callback(list[i], i);
+        }
+    };
+
+    var tooFormat = function (data) {
+        data = data + "";
+        var a = data.split("").reverse();
+        for (var i = 3; i < a.length; i = i + 4) {
+            a.splice(i, 0, ",");
+        }
+        a = a.reverse();
+        a = a.join("");
+        return a;
+    };
 
     // public service ийн code begin
     return {
+        datePrint: function () {
+            var realD = new Date();
+            realD.getTime;
+            document.querySelector(DomString.dateLabel).textContent = realD.getFullYear() + " oны " + realD.getMonth() + "-р cарын ";
+        },
         clearField: function () {
             var field = document.querySelectorAll(DomString.inputDescription + ", " + DomString.inputValue);
             var fieldArr = Array.prototype.slice.call(field);
@@ -39,24 +63,31 @@ var uiController = (function () {
         },
         // Page рүү орлого зарлагын мэдээний нийт дүнг гаргана
         printAll: function (data) {
-            document.querySelector(DomString.totalIncome).textContent = "+" + data.totalsInc;
-            document.querySelector(DomString.totalExpense).textContent = "-" + data.totalsExp;
-            document.querySelector(DomString.balance).textContent = "+" + data.balance;
+            document.querySelector(DomString.totalIncome).textContent = "+" + tooFormat(data.totalsInc);
+            document.querySelector(DomString.totalExpense).textContent = "-" + tooFormat(data.totalsExp);
+            document.querySelector(DomString.balance).textContent = "+" + tooFormat(data.balance);
             document.querySelector(DomString.huvi).textContent = data.huvi + "%";
             // console.log(document.querySelector(DomString.totalExpense).textContent);
         },
-        // Page рүү орлого зарлагын мэдээний нийт дүнг гаргана
-        whichDeleteItem: function () {
-            // document.querySelector(DomString.incomeList).addEventListener("click", function (event) {
-            //     var id = event.target.id;
-            //     var idAndType = id.splite("-");
-            //     if (idAndType[0] === "income") idAndType[0] = "inc";
-            //     if (idAndType[0] === "expense") idAndType[0] = "exp";
-            //     return {
-            //         type: idAndType[0],
-            //         id: idAndType[1],
-            //     };
-            // });
+        // Page дээрх элемэнтээс сонгогдсон id гаар устгана
+        changeType: function () {
+            var fields = document.querySelectorAll(DomString.inputType + ", " + DomString.inputDescription + ", " + DomString.inputValue);
+            nodeListOfForeach(fields, function (el) {
+                el.classList.toggle("red-focus");
+            });
+            document.querySelector(DomString.addBtn).classList.toggle("red");
+        },
+        // Page дээрх элемэнтээс сонгогдсон id гаар устгана
+        deleteItem: function (id) {
+            var e = document.getElementById(id);
+            e.parentNode.removeChild(e);
+        },
+        // Page рүү орлого зарлагын мэдээг гаргана
+        addPercentage: function (perArr) {
+            var perList = document.querySelectorAll(DomString.expenseLabel);
+            nodeListOfForeach(perList, function (el, index) {
+                el.textContent = perArr[index] + "%";
+            });
         },
         // Page рүү орлого зарлагын мэдээг гаргана
         addPrint: function (item, type) {
@@ -64,15 +95,15 @@ var uiController = (function () {
             if (type === "inc") {
                 list = DomString.incomeList;
                 html =
-                    '<div class="item clearfix" id="income-%id%"><div class="item__description">%%des%%</div><div class="right clearfix"><div class="item__value">+ %%val%%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+                    '<div class="item clearfix" id="inc-%id%"><div class="item__description">%%des%%</div><div class="right clearfix"><div class="item__value">+ %%val%%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
             } else {
                 list = DomString.expenseList;
                 html =
-                    '<div class="item clearfix" id="expense-%id%"><div class="item__description">%%des%%</div><div class="right clearfix"><div class="item__value">- %%val%%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+                    '<div class="item clearfix" id="exp-%id%"><div class="item__description">%%des%%</div><div class="right clearfix"><div class="item__value">- %%val%%</div><div class="item__percentage">50%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
             }
 
             html = html.replace("%id%", item.id);
-            html = html.replace("%%val%%", item.value);
+            html = html.replace("%%val%%", tooFormat(item.value));
             html = html.replace("%%des%%", item.description);
             document.querySelector(list).insertAdjacentHTML("beforeend", html);
         },
@@ -91,6 +122,14 @@ var financeController = (function () {
         this.id = id;
         this.value = value;
         this.description = description;
+        this.percentage = -1;
+    };
+    Expense.prototype.calcPercentage = function (totalIncome) {
+        if (totalIncome > 0) this.percentage = Math.round((this.value / totalIncome) * 100);
+        else this.percentage = 0;
+    };
+    Expense.prototype.getPercentage = function () {
+        return this.percentage;
     };
     var calcSum = function (type) {
         var sum = 0;
@@ -115,7 +154,20 @@ var financeController = (function () {
     //private data and function code end
     //public service ийн code begin
     return {
-        deleteItem: function (id, type) {
+        calcPercentages: function () {
+            data.wallet.exp.forEach(function (el) {
+                el.calcPercentage(data.totals.inc);
+            });
+        },
+
+        getPercentages: function () {
+            var allPercentage = data.wallet.exp.map(function (el) {
+                return el.getPercentage();
+            });
+            return allPercentage;
+        },
+
+        deleteItem: function (type, id) {
             var idArr = data.wallet[type].map(function (el) {
                 return el.id;
             });
@@ -126,7 +178,8 @@ var financeController = (function () {
             calcSum("inc");
             calcSum("exp");
             data.balance = data.totals.inc - data.totals.exp;
-            data.huvi = Math.round((data.totals.exp / data.totals.inc) * 100);
+            if (data.totals.inc > 0) data.huvi = Math.round((data.totals.exp / data.totals.inc) * 100);
+            else data.huvi = 0;
         },
         addData: function (type, value, description) {
             var item, id;
@@ -135,8 +188,6 @@ var financeController = (function () {
             if (type === "inc") item = new Income(id, value, description);
             else item = new Expense(id, value, description);
             data.wallet[type].push(item);
-            console.log(data);
-
             return item;
         },
         seeData: function () {
@@ -157,6 +208,16 @@ var financeController = (function () {
 
 //main хэсэг
 var appController = (function (uiController, financeController) {
+    var update = function () {
+        financeController.calc();
+        var data = financeController.sendData();
+        //5.Тооцоолол хийсэн public data -г page рүү хэвлэнэ
+        uiController.printAll(data);
+        financeController.calcPercentages();
+        var per = financeController.getPercentages();
+        //console.log(per);
+        uiController.addPercentage(per);
+    };
     var addlistItem = function () {
         //1.Оруулах өгөгдөлийг унших
         var input = uiController.getInput();
@@ -168,10 +229,7 @@ var appController = (function (uiController, financeController) {
             uiController.addPrint(item, input.type);
             uiController.clearField();
             //4.Finance controller дээр өгөгдөлийн тооцоолол хийнэ
-            financeController.calc();
-            var data = financeController.sendData();
-            //5.Тооцоолол хийсэн public data -г page рүү хэвлэнэ
-            uiController.printAll(data);
+            update();
         } else console.log("hooson");
     };
     var setEventListner = function () {
@@ -185,10 +243,22 @@ var appController = (function (uiController, financeController) {
                 addlistItem();
             }
         });
-
-        document.querySelector(DomString.bottomDiv).addEventListener("click", function (event) {
-            var id = event.target.id;
-            console.log(id);
+        document.querySelector(DomString.selectBox).addEventListener("change", function (event) {
+            uiController.changeType();
+        });
+        document.querySelector(DomString.itemLabel).addEventListener("click", function (event) {
+            var id = event.target.parentNode.parentNode.parentNode.parentNode.id;
+            if (id) {
+                var arr = [];
+                arr = id.split("-");
+                var type = arr[0];
+                var itemId = parseInt(arr[1]);
+                //financeController дээрээс өгөгдлийг устгах
+                financeController.deleteItem(type, itemId);
+                //Дэлгэц дээрээс хэвлэгдсэн зарлага орлогыг устгах
+                uiController.deleteItem(id);
+                update();
+            }
         });
     };
     //public service code begin
@@ -196,6 +266,7 @@ var appController = (function (uiController, financeController) {
     return {
         init: function () {
             console.log("Starting programm");
+            uiController.datePrint();
             setEventListner();
             uiController.printAll({ totalsInc: 0, totalsExp: 0, balance: 0, huvi: 0 });
         },
